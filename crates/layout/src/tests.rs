@@ -3963,7 +3963,17 @@ fn bare_code_wingdings_bullet_draws_its_square() {
     d.format_paragraphs(&Pos::body(0, 0), &Pos::body(0, 0), &|p| p.numbering = Some(wordcraft_doc::props::NumRef { num: id, level: 0 })).unwrap();
     let l = lay(&d);
     let label = l.pages[0].items.iter().find_map(|it| if let Placed::Lines { para, .. } = it { para.label.clone() } else { None }).unwrap();
+    // Where Wingdings is installed (Windows) its own glyph at the private-use code is drawn,
+    // which keeps Word's line height; elsewhere the standard square.
     let wd = wordcraft_fonts::word::resolve("Wingdings", false, false);
-    let expected = if wd.substituted || !wd.face.covers('\u{A7}') { "\u{25AA}" } else { "\u{A7}" };
+    let expected = if wd.substituted {
+        "\u{25AA}"
+    } else if wd.face.covers('\u{A7}') {
+        "\u{A7}"
+    } else if wd.face.covers('\u{F0A7}') {
+        "\u{F0A7}"
+    } else {
+        "\u{25AA}"
+    };
     assert_eq!(label.text, expected);
 }
