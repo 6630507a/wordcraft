@@ -1512,3 +1512,22 @@ fn vml_lines_and_rectangles() {
     }
     assert!(matches!(&objs[1], InlineObject::Shape { kind: ShapeKind::Rectangle, fill: Some(Rgb(255, 0, 0)), stroke: None, w: 30.0, h: 20.0, .. }));
 }
+
+/// A text box's margins (`lIns`, `tIns`, `rIns`, `bIns` on `wps:bodyPr`, EMUs) are read, missing
+/// ones taking Word's defaults, and written back; hostile values are clamped.
+#[test]
+fn text_box_insets_read_and_round_trip() {
+    let boxed = |body_pr: &str| {
+        format!(
+            r#"<w:p><w:r><w:drawing><wp:anchor behindDoc="0"><wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx="914400" cy="457200"/><wp:wrapNone/><wp:docPr id="1" name="Text Box 1"/><a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"><wps:wsp><wps:cNvSpPr txBox="1"/><wps:spPr><a:prstGeom prst="rect"/></wps:spPr><wps:txbx><w:txbxContent><w:p><w:r><w:t>boxed</w:t></w:r></w:p></w:txbxContent></wps:txbx>{body_pr}</wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>"#
+        )
+    };
+    let insets = |d: &Document| d.parts.values().find(|p| p.kind == wordcraft_doc::PartKind::TextBox).map(|p| p.body.insets);
+    let d = read_body(&boxed(r#"<wps:bodyPr lIns="0" tIns="0" rIns="12700"/>"#));
+    assert_eq!(insets(&d), Some(Some([0, 0, 12_700, 45_720])), "missing ones take the default");
+    let again = wordcraft_docx::read(&wordcraft_docx::write(&d).unwrap()).unwrap();
+    assert_eq!(insets(&again), insets(&d));
+    assert_eq!(insets(&read_body(&boxed("<wps:bodyPr/>"))), Some(None), "none given: Word's defaults");
+    let hostile = read_body(&boxed(r#"<wps:bodyPr lIns="-5" tIns="99999999999999" rIns="x"/>"#));
+    assert_eq!(insets(&hostile), Some(Some([0, wordcraft_doc::TextBody::MAX_INSET, 91_440, 45_720])));
+}

@@ -1160,6 +1160,17 @@ impl Reader<'_> {
             if let Some(a) = bp.attr("anchor") {
                 part.body.anchor = wordcraft_doc::props::valign_from_anchor(a);
             }
+            // Margins between box and text (`lIns`…, EMUs), each defaulting to Word's.
+            let names = ["lIns", "tIns", "rIns", "bIns"];
+            if names.iter().any(|n| bp.attr(n).is_some()) {
+                let mut insets = wordcraft_doc::TextBody::DEFAULT_INSETS;
+                for (v, n) in insets.iter_mut().zip(names) {
+                    if let Some(x) = bp.attr(n).and_then(|a| a.trim().parse::<i64>().ok()) {
+                        *v = x.clamp(0, i64::from(wordcraft_doc::TextBody::MAX_INSET)) as u32;
+                    }
+                }
+                part.body.insets = Some(insets);
+            }
         }
         let mut extra = ShapeExtra::default();
         // Arrowheads: any end type but `none` (ECMA-376 §20.1.10.33) is drawn as a triangle.

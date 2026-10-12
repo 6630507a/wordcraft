@@ -133,3 +133,22 @@ fn hostile_link_chains_stay_bounded() {
         assert_eq!(lines(&l, id).len(), 1, "box {id} shows its own text");
     }
 }
+
+/// A text box's own margins (`lIns`, `tIns`… in its `wps:bodyPr`) move its text, measured in Word
+/// for Windows (`plan/word` R22: the SARP form's boxes have none, and their labels sat 3.6 pt low).
+#[test]
+fn a_text_box_uses_its_own_margins() {
+    let text_at = |insets: Option<[u32; 4]>| {
+        let mut d = Document::from_text("x");
+        let id = text_box(&mut d, 0, "Inside", 144.0, 72.0, TextBody { insets, ..Default::default() });
+        let l = lay(&d);
+        let ((x, y, ..), r) = (lines(&l, id)[0], frame_of(&l, id));
+        (x - r.x, y - r.y)
+    };
+    let (x, y) = text_at(None);
+    assert!((x - BOX_INSET_X).abs() < 1.0 && (y - BOX_INSET_Y).abs() < 1.0, "Word's default margins: {x}, {y}");
+    let (x, y) = text_at(Some([0, 0, 0, 0]));
+    assert!(x.abs() < 1.0 && y.abs() < 1.0, "no margins: {x}, {y}");
+    let (x, y) = text_at(Some([254_000, 127_000, 0, 0]));
+    assert!((x - 20.0).abs() < 1.0 && (y - 10.0).abs() < 1.0, "20 pt and 10 pt: {x}, {y}");
+}

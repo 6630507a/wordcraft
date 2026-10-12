@@ -1019,6 +1019,12 @@ impl Writer<'_> {
         if body.anchor != wordcraft_doc::props::VAlign::Top {
             attrs.push(("anchor", wordcraft_doc::props::anchor_ooxml(body.anchor)));
         }
+        let insets = body.insets.map(|v| v.map(|x| x.to_string()));
+        if let Some(v) = &insets {
+            for (n, x) in ["lIns", "tIns", "rIns", "bIns"].into_iter().zip(v) {
+                attrs.push((n, x));
+            }
+        }
         match extra.warp.as_ref().and_then(|t| t.sanitized()) {
             Some(warp) => {
                 w.open("wps:bodyPr", &attrs);

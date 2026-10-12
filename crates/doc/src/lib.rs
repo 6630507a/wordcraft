@@ -274,11 +274,24 @@ pub struct TextBody {
     /// continues in when it doesn't fit this one. The linked box shows the rest of this box's
     /// story; its own blocks are unused. See [`Document::text_box_chains`].
     pub next: Option<u32>,
+    /// The margins between the box and its text (left, top, right, bottom), in EMUs (12,700 to
+    /// the point); `None` is Word's default, 0.1" at the sides and 0.05" at top and bottom.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insets: Option<[u32; 4]>,
 }
 
 impl TextBody {
+    /// Word's default text box margins, EMUs (left, top, right, bottom).
+    pub const DEFAULT_INSETS: [u32; 4] = [91_440, 45_720, 91_440, 45_720];
+    /// Largest margin kept from a file, EMUs (22").
+    pub const MAX_INSET: u32 = 20_116_800;
+
     pub fn is_default(&self) -> bool {
         *self == TextBody::default()
+    }
+    /// The margins in points (left, top, right, bottom).
+    pub fn inset_pts(&self) -> [f32; 4] {
+        self.insets.unwrap_or(Self::DEFAULT_INSETS).map(|v| v.min(Self::MAX_INSET) as f32 / 12_700.0)
     }
 }
 
