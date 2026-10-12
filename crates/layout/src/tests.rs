@@ -3948,3 +3948,22 @@ fn footer_page_total_needs_one_body_pass() {
     p.insert_object(n, field(), &Default::default()).unwrap();
     assert!(matches!(first(&d), Pass::Again(t) if t.pages == 3));
 }
+
+/// A Wingdings bullet stored as its bare code (`§` = 0xA7, as Microsoft's specification documents
+/// store it) draws Wingdings' small square, as in Word, not a section sign.
+#[test]
+fn bare_code_wingdings_bullet_draws_its_square() {
+    let mut d = Document::from_text("one");
+    let id = d.numbering.add_list(wordcraft_doc::ListKind::BulletChar('\u{A7}'));
+    for a in &mut d.numbering.abstracts {
+        if let Some(l) = a.levels.first_mut() {
+            l.chr.font = Some("Wingdings".into());
+        }
+    }
+    d.format_paragraphs(&Pos::body(0, 0), &Pos::body(0, 0), &|p| p.numbering = Some(wordcraft_doc::props::NumRef { num: id, level: 0 })).unwrap();
+    let l = lay(&d);
+    let label = l.pages[0].items.iter().find_map(|it| if let Placed::Lines { para, .. } = it { para.label.clone() } else { None }).unwrap();
+    let wd = wordcraft_fonts::word::resolve("Wingdings", false, false);
+    let expected = if wd.substituted || !wd.face.covers('\u{A7}') { "\u{25AA}" } else { "\u{A7}" };
+    assert_eq!(label.text, expected);
+}
