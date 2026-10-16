@@ -4,7 +4,7 @@
   `wix extension add -g WixToolset.UI.wixext/5.0.2` and the same for WixToolset.Util.wixext).
   Built by package.ps1:
 
-    wix build wordcraft.wxs -arch x64 -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
+    wix build wordcraft.wxs installer-ui.wxs -arch x64 -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
       -d Version=1.2.3 -d BinDir=... -d IconPath=... -d LicenseRtf=... -o out.msi
 
   Per-machine install into Program Files with a Start Menu shortcut. The installer shows the
@@ -37,22 +37,12 @@
     <Property Id="ARPURLUPDATEINFO" Value="https://getartcraft.com/apps/wordcraft" />
     <Property Id="ARPHELPLINK" Value="https://discord.gg/artcraft" />
 
-    <!-- Installer UI (#198): WixUI_Minimal is welcome + license, progress, then a finish page so
-         people can see the install worked. Its dialogs and bitmaps are WiX's own
-         (WixToolset.UI.wixext); package.ps1 builds the license RTF from LICENSE-MIT and
-         LICENSE-APACHE. The finish page offers to launch WordCraft (ticked by default) through
-         WixShellExec (WixToolset.Util.wixext); silent installs (/qn) never show it. -->
-    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch WordCraft" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
     <Property Id="WixShellExecTarget" Value="[#WordcraftExe]" />
     <CustomAction Id="LaunchWordcraft" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)" DllEntry="WixShellExec"
         Impersonate="yes" Return="ignore" />
-    <UI>
-      <ui:WixUI Id="WixUI_Minimal" />
-      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchWordcraft"
-          Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
-    </UI>
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="WordCraft" />
@@ -61,7 +51,12 @@
 
     <Feature Id="Main" Title="WordCraft" Level="1">
       <ComponentGroupRef Id="WordcraftFiles" />
+      <ComponentGroupRef Id="CraftInstallerSettings" />
     </Feature>
+    <!-- Shared full UI; app installation policy remains below. -->
+    <!-- Preserve the previous stock WiX wizard's ARP Modify policy. -->
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <UIRef Id="CraftInstallerUI" />
   </Package>
 
   <Fragment>

@@ -12,9 +12,8 @@
   warning when no signing secrets are set).
 
   Needs: Rust (MSVC toolchain + the target), the Windows SDK (rc.exe, signtool.exe),
-  and WiX v5 with its UI and Util extensions (installer dialogs, "Launch WordCraft" on finish):
+  and WiX v5 with its Util extension (installer dialogs, "Launch WordCraft" on finish):
     dotnet tool install --global wix --version 5.0.2
-    wix extension add -g WixToolset.UI.wixext/5.0.2
     wix extension add -g WixToolset.Util.wixext/5.0.2
 
 .EXAMPLE
@@ -126,8 +125,8 @@ $rtf = '{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss\fcharset0 Tahoma;}}\vi
 
 $Msi = Join-Path $Dist "wordcraft-$Version-windows-$Arch.msi"
 Invoke-Native 'wix build' {
-  wix build (Join-Path $PSScriptRoot 'wordcraft.wxs') -arch $Arch `
-    -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext `
+  wix build (Join-Path $PSScriptRoot 'wordcraft.wxs') (Join-Path $PSScriptRoot 'installer-ui.wxs') -arch $Arch `
+    -ext WixToolset.Util.wixext `
     -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\wordcraft.ico')" `
     -d "LicenseRtf=$LicenseRtf" `
     -o $Msi

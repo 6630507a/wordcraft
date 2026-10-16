@@ -1645,6 +1645,9 @@ impl WordApp {
         }
         let on_chrome = ctx.layer_id_at(pos).is_none_or(|l| l.order == egui::Order::Background);
         if on_chrome && ctx.memory(|m| m.focused().is_none()) && !egui::Popup::is_any_open(ctx) {
+            // The next frame handles typing before the canvas requests egui focus.
+            // Restore logical focus now so that first text event is not dropped.
+            self.canvas.focused = true;
             self.canvas.want_focus = true;
             ctx.request_repaint();
         }

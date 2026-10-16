@@ -88,3 +88,8 @@ languages, screen-reader access, ecosystem decisions (VBA, add-ins, cloud), an i
 | 2026-10-10 | major | Created: milestones moved from ROADMAP.md with remaining hours; Current focus from gaps.md; M15–M16 added |
 | 2026-10-10 | trivial | M11: ink pens and eraser landed (#307) |
 | 2026-10-11 | trivial | M11: lasso, Add Pen, Ink to Shape and Ink Replay landed (#395) |
+
+
+### Windows installer unification — release preparation, 2026-10-12
+
+The shared craft-installer UI preserves this revision's install options and provides persistent installation, repair and Windows Settings removal completion screens. Silent modes stay unattended. Earlier Windows acceptance is recorded in packaging/windows/README.md; normal CI and production-profile upgrade qualification against pinned current releases are in progress. No release or PR has been published.
